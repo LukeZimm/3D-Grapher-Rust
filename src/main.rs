@@ -1,9 +1,9 @@
 extern crate kiss3d;
 
 use kiss3d::camera;
-use kiss3d::event::{Action, WindowEvent};
+// use kiss3d::event::{Action, WindowEvent};
 use kiss3d::light::Light;
-use kiss3d::nalgebra::{Point3, Vector3};
+use kiss3d::nalgebra::Point3;
 use kiss3d::window::Window;
 
 use std::f64::consts;
@@ -12,7 +12,7 @@ fn main() {
     let eye = Point3::new(10.0f32, 10.0, 10.0);
     let at = Point3::origin();
     let mut window = Window::new("3D Grapher");
-    let mut camera = camera::FirstPerson::new(eye, at);
+    let _camera = camera::FirstPerson::new(eye, at);
     window.set_light(Light::StickToCamera);
 
     let x_range: (f64, f64) = (-1.0, 1.0);
@@ -43,12 +43,12 @@ fn main() {
         );
         // pts
         let mut cached_x: f64 = x_range.0;
-        let mut cached_y: f64 = y_range.0;
-        let mut cached_z: f64 = function(x_range.0, y_range.0);
+        let mut cached_y: f64;
+        let mut cached_z: f64;
         for i in 0..((x_range.1 - x_range.0) / x_step) as i32 {
             let x = x_range.0 + i as f64 * x_step;
             cached_y = y_range.0;
-            cached_z = function(x_range.0, y_range.0);
+            cached_z = function(x - x_step, y_range.0);
             for j in 0..((y_range.1 - y_range.0) / y_step) as i32 {
                 let y = y_range.0 + j as f64 * y_step;
                 let z = function(x, y);
@@ -68,13 +68,13 @@ fn main() {
                 }
             }
         }
-        let mut cached_x: f64 = x_range.0;
+        let mut cached_x: f64;
         let mut cached_y: f64 = y_range.0;
-        let mut cached_z: f64 = function(x_range.0, y_range.0);
-        for j in 0..((y_range.1 - y_range.0) / y_step) as i32 {
+        let mut cached_z: f64;
+        for j in 1..((y_range.1 - y_range.0) / y_step) as i32 {
             let y = y_range.0 + j as f64 * y_step;
             cached_x = x_range.0;
-            cached_z = function(x_range.0, y_range.0);
+            cached_z = function(x_range.0, y - y_step);
             for i in 0..((x_range.1 - x_range.0) / x_step) as i32 {
                 let x = x_range.0 + i as f64 * x_step;
                 let z = function(x, y);
@@ -98,10 +98,10 @@ fn main() {
 fn function(x: f64, y: f64) -> f64 {
     // 1.0 / (15.0 * (x.powi(2) + y.powi(2))) // tube
 
-    (0.4f64.powi(2) - (0.6 - (x.powi(2) + y.powi(2)).powf(0.5)).powi(2)).powf(0.5)
+    // (0.4f64.powi(2) - (0.6 - (x.powi(2) + y.powi(2)).powf(0.5)).powi(2)).powf(0.5)
     // torus
 
-    // x.powi(2) - y.powi(2) // pringle
+    x.powi(2) - y.powi(2) // pringle
 
     // consts::E.powf(x) * y.sin() // crazy
 }
