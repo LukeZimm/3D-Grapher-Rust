@@ -4,7 +4,6 @@ use kiss3d::camera;
 // use kiss3d::event::{Action, WindowEvent};
 use kiss3d::light::Light;
 use kiss3d::nalgebra::{Point3, Translation3};
-use kiss3d::renderer::Renderer;
 use kiss3d::window::Window;
 
 use std::f64::consts;
@@ -12,9 +11,6 @@ use std::f64::consts;
 /* TODO:
 GUI - equation, range, step
 plane intersection
-dashes on intercept lines
-plot pt
-convert to functional
 */
 
 fn main() {
@@ -36,7 +32,7 @@ fn main() {
 
     while window.render() {
         // origin lines
-        draw_origin_lines(x_range, y_range, &mut window);
+        draw_origin_lines(x_range, x_step, y_range, x_step, &mut window);
         plot_points(x_range, x_step, y_range, y_step, &mut window);
         draw_lines(x_range, x_step, y_range, y_step, &mut window);
     }
@@ -110,12 +106,104 @@ fn draw_lines(
     }
 }
 
-fn draw_origin_lines(x_range: (f64, f64), y_range: (f64, f64), window: &mut Window) {
-    window.draw_line(
+fn draw_origin_lines(
+    x_range: (f64, f64),
+    x_step: f64,
+    y_range: (f64, f64),
+    y_step: f64,
+    window: &mut Window,
+) {
+    let z_range: (f64, f64) = ((x_range.0 + y_range.0) / 2.0, (x_range.1 + y_range.1) / 2.0);
+    for a in 0..4 {
+        window.draw_line(
+            &Point3::new(
+                if a == 0 { x_range.0 as f32 } else { 0.0 },
+                if a == 2 { z_range.0 as f32 } else { 0.0 },
+                if a == 1 { y_range.0 as f32 } else { 0.0 },
+            ),
+            &Point3::new(
+                if a == 0 { x_range.1 as f32 } else { 0.0 },
+                if a == 2 { z_range.1 as f32 } else { 0.0 },
+                if a == 1 { y_range.1 as f32 } else { 0.0 },
+            ),
+            &Point3::new(
+                if a == 0 { 1.0 } else { 0.0 },
+                if a == 1 { 1.0 } else { 0.0 },
+                if a == 2 { 1.0 } else { 0.0 },
+            ),
+        );
+        let qty = if a == 0 {
+            ((x_range.1 - x_range.0) / x_step / 5.0) as i32
+        } else if a == 1 {
+            ((y_range.1 - y_range.0) / y_step / 5.0) as i32
+        } else {
+            ((z_range.1 - z_range.0) / (x_step + y_step) / 10.0) as i32
+        };
+        for i in 0..((x_range.1 - x_range.0) / x_step / 5.0) as i32 as i32 + 1 {
+            window.draw_line(
+                &Point3::new(
+                    if a == 0 {
+                        (x_range.0 + x_step * i as f64 * 5.0) as f32
+                    } else if a == 2 {
+                        0.0
+                    } else {
+                        -0.025
+                    },
+                    if a == 0 || a == 1 {
+                        0.0
+                    } else {
+                        (z_range.0 + (x_step + y_step) / 2.0 * i as f64 * 5.0) as f32
+                    },
+                    if a == 0 || a == 2 {
+                        -0.025
+                    } else if a == 1 {
+                        (y_range.0 + y_step * i as f64 * 5.0) as f32
+                    } else {
+                        0.0
+                    },
+                ),
+                &Point3::new(
+                    if a == 0 {
+                        (x_range.0 + x_step * i as f64 * 5.0) as f32
+                    } else if a == 2 {
+                        0.0
+                    } else {
+                        0.025
+                    },
+                    if a == 0 || a == 1 {
+                        0.0
+                    } else {
+                        (z_range.0 + (x_step + y_step) / 2.0 * i as f64 * 5.0) as f32
+                    },
+                    if a == 0 || a == 2 {
+                        0.025
+                    } else if a == 1 {
+                        (y_range.0 + y_step * i as f64 * 5.0) as f32
+                    } else {
+                        0.0
+                    },
+                ),
+                &Point3::new(
+                    if a == 0 { 1.0 } else { 0.0 },
+                    if a == 1 { 1.0 } else { 0.0 },
+                    if a == 2 || a == 3 { 1.0 } else { 0.0 },
+                ),
+            );
+        }
+    }
+    /* window.draw_line(
         &Point3::new(x_range.0 as f32, 0.0, 0.0),
         &Point3::new(x_range.1 as f32, 0.0, 0.0),
         &Point3::new(1.0, 0.0, 0.0),
     );
+    for i in 0..((x_range.1 - x_range.0) / x_step / 5.0) as i32 {
+        let x = x_range.0 + x_step * i as f64 * 5.0;
+        window.draw_line(
+            &Point3::new(x as f32, 0.0, -0.025),
+            &Point3::new(x as f32, 0.0, 0.025),
+            &Point3::new(1.0, 0.0, 0.0),
+        );
+    }
     window.draw_line(
         &Point3::new(0.0, 0.0, y_range.0 as f32),
         &Point3::new(0.0, 0.0, y_range.1 as f32),
@@ -125,7 +213,7 @@ fn draw_origin_lines(x_range: (f64, f64), y_range: (f64, f64), window: &mut Wind
         &Point3::new(0.0, (x_range.0 + y_range.0) as f32 / 2.0, 0.0),
         &Point3::new(0.0, (x_range.1 + y_range.1) as f32 / 2.0, 0.0),
         &Point3::new(0.0, 0.0, 1.0),
-    );
+    ); */
 }
 
 fn plot_point(x: f64, y: f64, window: &mut Window) {
@@ -141,8 +229,8 @@ fn function(x: f64, y: f64) -> f64 {
     // (0.4f64.powi(2) - (0.6 - (x.powi(2) + y.powi(2)).powf(0.5)).powi(2)).powf(0.5)
     // torus
 
-    // x.powi(2) - y.powi(2) // pringle
+    x.powi(2) - y.powi(2) // pringle
 
     // consts::E.powf(x) * y.sin() // crazy
-    (x.powi(2) + y.powi(2)).powf(x * y) - 0.75
+    // (x.powi(2) + y.powi(2)).powf(x * y) - 0.75
 }
