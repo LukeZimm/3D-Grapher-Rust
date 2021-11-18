@@ -42,8 +42,13 @@ fn main() {
             &Point3::new(0.0, 0.0, 1.0),
         );
         // pts
+        let mut cached_x: f64 = x_range.0;
+        let mut cached_y: f64 = y_range.0;
+        let mut cached_z: f64 = function(x_range.0, y_range.0);
         for i in 0..((x_range.1 - x_range.0) / x_step) as i32 {
             let x = x_range.0 + i as f64 * x_step;
+            cached_y = y_range.0;
+            cached_z = function(x_range.0, y_range.0);
             for j in 0..((y_range.1 - y_range.0) / y_step) as i32 {
                 let y = y_range.0 + j as f64 * y_step;
                 let z = function(x, y);
@@ -51,6 +56,36 @@ fn main() {
                     &Point3::new(x as f32, z as f32, y as f32),
                     &Point3::new(1.0, 1.0, 1.0),
                 );
+                if i > 0 {
+                    window.draw_line(
+                        &Point3::new(x as f32, z as f32, y as f32),
+                        &Point3::new(cached_x as f32, cached_z as f32, cached_y as f32),
+                        &Point3::new(1.0, 1.0, 1.0),
+                    );
+                    cached_x = x;
+                    cached_y = y;
+                    cached_z = z;
+                }
+            }
+        }
+        let mut cached_x: f64 = x_range.0;
+        let mut cached_y: f64 = y_range.0;
+        let mut cached_z: f64 = function(x_range.0, y_range.0);
+        for j in 0..((y_range.1 - y_range.0) / y_step) as i32 {
+            let y = y_range.0 + j as f64 * y_step;
+            cached_x = x_range.0;
+            cached_z = function(x_range.0, y_range.0);
+            for i in 0..((x_range.1 - x_range.0) / x_step) as i32 {
+                let x = x_range.0 + i as f64 * x_step;
+                let z = function(x, y);
+                window.draw_line(
+                    &Point3::new(x as f32, z as f32, y as f32),
+                    &Point3::new(cached_x as f32, cached_z as f32, cached_y as f32),
+                    &Point3::new(1.0, 1.0, 1.0),
+                );
+                cached_x = x;
+                cached_y = y;
+                cached_z = z;
             }
         }
         // window.draw_point(&Point3::new(0.0, 0.0, 0.0), &Point3::new(1.0, 1.0, 1.0));
@@ -63,8 +98,10 @@ fn main() {
 fn function(x: f64, y: f64) -> f64 {
     // 1.0 / (15.0 * (x.powi(2) + y.powi(2))) // tube
 
-    // (0.4f64.powi(2) - (0.6 - (x.powi(2) + y.powi(2)).powf(0.5)).powi(2)).powf(0.5) // torus
-    x.powi(2) - y.powi(2) // pringle
+    (0.4f64.powi(2) - (0.6 - (x.powi(2) + y.powi(2)).powf(0.5)).powi(2)).powf(0.5)
+    // torus
+
+    // x.powi(2) - y.powi(2) // pringle
 
     // consts::E.powf(x) * y.sin() // crazy
 }
